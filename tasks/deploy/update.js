@@ -39,11 +39,13 @@ module.exports = function (gruntOrShipit) {
     function packRelease() {
       shipit.log('Creating tarball for deployment');
       return new Promise(function(resolve, reject){
-        var tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
-        targz().compress(shipit.config.workspace, tarballName, function(err){
+        shipit.tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
+        targz().compress(shipit.config.workspace, shipit.tarballName, function(err){
           if(err) {
+            shipit.log('Failed to create tarball for deployment: %s',err);
             reject(err);
           }
+          shipit.log('Successfully created tarball: %s',shipit.tarballName);
           resolve();
         });
       });
@@ -69,20 +71,16 @@ module.exports = function (gruntOrShipit) {
      */
 
     function remoteCopy() {
-      var options = _.get(shipit.config, 'deploy.port') || 22;
-
       shipit.log('Copy tarball to remote servers.');
-
-      return client.scp({})
-
-      var rsyncFrom = shipit.config.rsyncFrom || shipit.config.workspace;
-      var uploadDirPath = path.resolve(rsyncFrom, shipit.config.dirToCopy || '');
-
-      shipit.log('Copy project to remote servers.');
-
-      return shipit.remoteCopy(uploadDirPath + '/', shipit.releasePath, options)
-      .then(function () {
-        shipit.log(chalk.green('Finished copy.'));
+      return new Promise(function(resolve, reject){
+        client.scp(shipit.tarballName,shipit.releasePath,function(err){
+          if(err) {
+              shipit.log(chalk.red('Failed to copy to: %s'), shipit.releasePath);
+              reject(err);
+          }
+          shipit.log(chalk.green('Finished copy.'));
+          resolve();
+        });
       });
     }
 

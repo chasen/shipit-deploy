@@ -1,6 +1,6 @@
 {
-  "name": "shipit-csp",
-  "version": "2.4.0",
+  "name": "shipit-scp",
+  "version": "0.0.1",
   "description": "Set of deployment tasks for Shipit based on git tar and csp commands. ",
   "main": "index.js",
   "directories": {

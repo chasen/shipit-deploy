@@ -1,6 +1,8 @@
 # shipit-scp
 
-Set of deployment tasks for [Shipit](https://github.com/shipitjs/shipit) based on git and rsync commands.
+This is a fork of [shipit-deploy](https://github.com/shipitjs/shipit-deploy) refactored to use tar and scp. I was having lots of issues trying to get rsync to work with windows so this is where I landed.
+
+Set of deployment tasks for [Shipit](https://github.com/shipitjs/shipit) based on git, tar and scp commands.
 
 **Features:**
 
@@ -12,7 +14,7 @@ Set of deployment tasks for [Shipit](https://github.com/shipitjs/shipit) based o
 ## Install
 
 ```
-npm install shipit-deploy
+npm install shipit-csp
 ```
 
 If you are deploying from Windows, you may want to have a look at the [wiki page about usage in Windows](https://github.com/shipitjs/shipit-deploy/wiki/Deploying-from-Windows).
