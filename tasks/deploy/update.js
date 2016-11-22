@@ -5,6 +5,9 @@ var chalk = require('chalk');
 var _ = require('lodash');
 var util = require('util');
 var Promise = require('bluebird');
+var client = require('scp2');
+var fs = require('fs');
+var targz = require('tar.gz');
 
 /**
  * Update task.
@@ -26,24 +29,24 @@ module.exports = function (gruntOrShipit) {
     return setPreviousRelease()
     .then(setPreviousRevision)
     .then(createReleasePath)
-    .then(copyPreviousRelease)
+    .then(packRelease)
     .then(remoteCopy)
     .then(setCurrentRevision)
     .then(function () {
       shipit.emit('updated');
     });
 
-    /**
-     * Copy previous release to release dir.
-     */
-
-    function copyPreviousRelease() {
-      var copyParameter = shipit.config.copy || '-a';
-      if (!shipit.previousRelease) {
-        return Promise.resolve();
-      }
-      shipit.log('Copy previous release to "%s"', shipit.releasePath);
-      return shipit.remote(util.format('cp %s %s/. %s', copyParameter, path.join(shipit.releasesPath, shipit.previousRelease), shipit.releasePath));
+    function packRelease() {
+      shipit.log('Creating tarball for deployment');
+      return new Promise(function(resolve, reject){
+        var tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
+        targz().compress(shipit.config.workspace, tarballName, function(err){
+          if(err) {
+            reject(err);
+          }
+          resolve();
+        });
+      });
     }
 
     /**
@@ -66,7 +69,12 @@ module.exports = function (gruntOrShipit) {
      */
 
     function remoteCopy() {
-      var options = _.get(shipit.config, 'deploy.remoteCopy') || {rsync: '--del'};
+      var options = _.get(shipit.config, 'deploy.port') || 22;
+
+      shipit.log('Copy tarball to remote servers.');
+
+      return client.scp({})
+
       var rsyncFrom = shipit.config.rsyncFrom || shipit.config.workspace;
       var uploadDirPath = path.resolve(rsyncFrom, shipit.config.dirToCopy || '');
 

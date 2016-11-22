@@ -1,10 +1,4 @@
-# shipit-deploy
-
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/shipitjs/shipit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-[![Build Status](https://travis-ci.org/shipitjs/shipit-deploy.svg?branch=master)](https://travis-ci.org/shipitjs/shipit-deploy)
-[![Dependency Status](https://david-dm.org/shipitjs/shipit-deploy.svg?theme=shields.io)](https://david-dm.org/shipitjs/shipit-deploy)
-[![devDependency Status](https://david-dm.org/shipitjs/shipit-deploy/dev-status.svg?theme=shields.io)](https://david-dm.org/shipitjs/shipit-deploy#info=devDependencies)
+# shipit-scp
 
 Set of deployment tasks for [Shipit](https://github.com/shipitjs/shipit) based on git and rsync commands.
 
