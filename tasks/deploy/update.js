@@ -37,18 +37,9 @@ module.exports = function (gruntOrShipit) {
     });
 
     function packRelease() {
-      shipit.log('Creating tarball for deployment');
-      return new Promise(function(resolve, reject){
-        shipit.tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
-        targz().compress(shipit.config.workspace, shipit.tarballName, function(err){
-          if(err) {
-            shipit.log('Failed to create tarball for deployment: %s',err);
-            reject(err);
-          }
-          shipit.log('Successfully created tarball: %s',shipit.tarballName);
-          resolve();
-        });
-      });
+      shipit.tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
+      shipit.log('Creating tarball from %s and putting it %s', shipit.config.workspace, shipit.tarballName);
+      return targz().compress(shipit.config.workspace, shipit.tarballName);
     }
 
     /**
