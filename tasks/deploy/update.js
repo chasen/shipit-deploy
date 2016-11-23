@@ -27,58 +27,32 @@ module.exports = function (gruntOrShipit) {
     _.assign(shipit.constructor.prototype, require('../../lib/shipit'));
 
     return setPreviousRelease()
-    .then(setPreviousRevision)
-    .then(createReleasePath)
-    .then(packRelease)
-    .then(remoteCopy)
-    .then(setCurrentRevision)
-    .then(function () {
-      shipit.emit('updated');
-    });
-
-    function packRelease() {
-      shipit.tarballName = path.join(shipit.config.workspace, shipit.releaseDirname+'.tar.gz');
-      shipit.log('Creating tarball from %s and putting it %s', shipit.config.workspace, shipit.tarballName);
-      return targz().compress(shipit.config.workspace, shipit.tarballName);
-    }
-
-    /**
-     * Create and define release path.
-     */
-
-    function createReleasePath() {
-      shipit.releaseDirname = moment.utc().format('YYYYMMDDHHmmss');
-      shipit.releasePath = path.join(shipit.releasesPath, shipit.releaseDirname);
-
-      shipit.log('Create release path "%s"', shipit.releasePath);
-      return shipit.remote('mkdir -p ' + shipit.releasePath)
+      .then(setPreviousRevision)
+      .then(createReleasePath)
+      .then(packRelease)
+      .then(remoteCopy)
+      .then(setCurrentRevision)
       .then(function () {
-        shipit.log(chalk.green('Release path created.'));
+        shipit.emit('updated');
       });
-    }
 
     /**
-     * Remote copy project.
+     * Set shipit.previousRelease.
      */
-
-    function remoteCopy() {
-      shipit.log('Copy tarball to remote servers.');
-      return new Promise(function(resolve, reject){
-        client.scp(shipit.tarballName,shipit.releasePath,function(err){
-          if(err) {
-              shipit.log(chalk.red('Failed to copy to: %s'), shipit.releasePath);
-              reject(err);
+    function setPreviousRelease() {
+      shipit.previousRelease = null;
+      return shipit.getCurrentReleaseDirname()
+        .then(function (currentReleasseDirname) {
+          if (currentReleasseDirname) {
+            shipit.log(chalk.green('Previous release found.'));
+            shipit.previousRelease = currentReleasseDirname;
           }
-          shipit.log(chalk.green('Finished copy.'));
-          resolve();
         });
-      });
     }
 
     /**
      * Set shipit.previousRevision from remote REVISION file.
      */
-
     function setPreviousRevision() {
       shipit.previousRevision = null;
 
@@ -87,27 +61,54 @@ module.exports = function (gruntOrShipit) {
       }
 
       return shipit.getRevision(shipit.previousRelease)
-      .then(function(revision) {
+        .then(function (revision) {
 
-        if (revision) {
-          shipit.log(chalk.green('Previous revision found.'));
-          shipit.previousRevision = revision;
-        }
+          if (revision) {
+            shipit.log(chalk.green('Previous revision found.'));
+            shipit.previousRevision = revision;
+          }
+        });
+    }
+
+    /**
+     * Create and define release path.
+     */
+    function createReleasePath() {
+      shipit.releaseDirname = moment.utc().format('YYYYMMDDHHmmss');
+      shipit.releasePath = path.join(shipit.releasesPath, shipit.releaseDirname);
+
+      shipit.log('Create release path "%s"', shipit.releasePath);
+      return shipit.remote('mkdir -p ' + shipit.releasePath)
+        .then(function () {
+          shipit.log(chalk.green('Release path created.'));
+        });
+    }
+
+    /**
+     * Package release for upload
+     */
+    function packRelease() {
+      shipit.tarballName = path.join(shipit.config.workspace, shipit.releaseDirname + '.tar.gz');
+      shipit.log('Creating tarball from %s and putting it %s', shipit.config.workspace, shipit.tarballName);
+      return targz().compress(shipit.config.workspace, shipit.tarballName).then(function(){
+        shipit.log(chalk.green('Tarball created successfully.'));
       });
     }
 
     /**
-     * Set shipit.previousRelease.
+     * Remote copy project.
      */
-
-    function setPreviousRelease() {
-      shipit.previousRelease = null;
-      return shipit.getCurrentReleaseDirname()
-      .then(function(currentReleasseDirname) {
-        if (currentReleasseDirname) {
-          shipit.log(chalk.green('Previous release found.'));
-          shipit.previousRelease = currentReleasseDirname;
-        }
+    function remoteCopy() {
+      shipit.log('Copy tarball to remote servers.');
+      return new Promise(function (resolve, reject) {
+        client.scp(shipit.tarballName, shipit.releasePath, function (err) {
+          if (err) {
+            shipit.log('Failed to copy to: %s', shipit.releasePath);
+            reject(err);
+          }
+          shipit.log(chalk.green('Finished copy.'));
+          resolve();
+        });
       });
     }
 
@@ -118,10 +119,10 @@ module.exports = function (gruntOrShipit) {
     function setCurrentRevision() {
       shipit.log('Setting current revision and creating revision file.');
 
-      return shipit.local('git rev-parse ' + shipit.config.branch, {cwd: shipit.config.workspace}).then(function(response) {
+      return shipit.local('git rev-parse ' + shipit.config.branch, {cwd: shipit.config.workspace}).then(function (response) {
         shipit.currentRevision = response.stdout.trim();
         return shipit.remote('echo "' + shipit.currentRevision + '" > ' + path.join(shipit.releasePath, 'REVISION'));
-      }).then(function() {
+      }).then(function () {
         shipit.log(chalk.green('Revision file created.'));
       });
     }
